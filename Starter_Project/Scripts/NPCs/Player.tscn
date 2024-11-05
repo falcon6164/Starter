@@ -1,0 +1,183 @@
+[gd_scene load_steps=11 format=3 uid="uid://bq5q7c0uwv4mf"]
+
+[ext_resource type="Texture2D" uid="uid://ist3m1r67n45" path="res://Sprites/eagle/eagle-attack-1.png" id="1_3rlaw"]
+[ext_resource type="Texture2D" uid="uid://d17pu6bm6qckl" path="res://Sprites/eagle/eagle-attack-2.png" id="2_my04w"]
+[ext_resource type="Texture2D" uid="uid://cmfdj7cyn6oih" path="res://Sprites/eagle/eagle-attack-3.png" id="3_hfp3l"]
+[ext_resource type="Texture2D" uid="uid://iq2p6orlsegn" path="res://Sprites/eagle/eagle-attack-4.png" id="4_tq1s3"]
+[ext_resource type="PackedScene" uid="uid://bkdp6gkp2thxc" path="res://Scripts/Utility/HurtBox.tscn" id="5_27j8u"]
+
+[sub_resource type="GDScript" id="GDScript_sm7py"]
+script/source = "extends CharacterBody2D
+
+@export var SPEED = 200.0
+@export var hp = 10
+
+@onready var Sprite = $AnimatedSprite2D
+
+#Attacks
+var iceSpear = preload(\"res://Scripts/NPCs/Attacks/ice_spear.tscn\")
+
+#Attack Nodes
+@onready var iceSpearTimer = get_node(\"%IceSpearTimer\")
+@onready var iceSpearAttackTimer = get_node(\"%AttackTimer\")
+
+#IceSpear
+var icespear_ammo = 0
+var icespear_baseammo = 3
+var icespear_attackspeed = 1.5
+var icespear_level = 1
+
+#Enemy Related 目標敵人的陣列，會從陣列中挑選作為攻擊目標
+var enemy_close = []
+
+func _ready():
+	attack()
+
+func _physics_process(delta):
+	move()
+	
+func move():
+	# 宣告上下左右輸入，左右＝Ｘ，上下＝Ｙ 
+	# 最後 normalize 再 call move and slide 轉化成移動方向及速度
+	# Normalize 是避免斜向移動時速度比正常移動快
+	var X_mov = Input.get_action_strength(\"ui_right\") - Input.get_action_strength(\"ui_left\")
+	var Y_mov = Input.get_action_strength(\"ui_down\") - Input.get_action_strength(\"ui_up\")
+	var mov = Vector2(X_mov, Y_mov)
+	if mov.x > 0:
+		Sprite.flip_h = 1
+	else:
+		Sprite.flip_h = 0
+		
+	if mov != Vector2.ZERO:
+		Sprite.play()
+	else:
+		Sprite.stop()	
+	velocity = mov.normalized() * SPEED
+	move_and_slide()
+
+func _on_hurt_box_hurt(damage):
+	hp -= damage
+	print(hp)
+	if hp <= 0:
+		queue_free()
+
+func attack():
+	if icespear_level > 0:
+		iceSpearTimer.wait_time = icespear_attackspeed
+		if iceSpearTimer.is_stopped():
+			iceSpearTimer.start()
+	
+
+func _on_ice_spear_timer_timeout():
+	icespear_ammo += icespear_baseammo
+	iceSpearAttackTimer.start()
+
+func _on_attack_timer_timeout():
+	if icespear_ammo > 0:
+		var icespear_attack = iceSpear.instantiate()
+		icespear_attack.position = position
+		print(icespear_attack.position)
+		icespear_attack.target = get_random_target()
+		add_child(icespear_attack)
+		icespear_attack.level = icespear_level
+		icespear_ammo -= 1
+		
+		if icespear_ammo > 0:
+			iceSpearAttackTimer.start()
+		else:
+			iceSpearAttackTimer.stop()
+
+func get_random_target():
+	if enemy_close.size() > 0:
+		return enemy_close.pick_random().global_position
+	else:
+		return Vector2.UP
+
+
+func _on_enemy_detection_area_body_entered(body):
+	#檢查進入偵測區域的敵人有沒有被列入 enemy_close 陣列中，如果沒有就加入
+	if not enemy_close.has(body):
+		enemy_close.append(body)
+
+
+func _on_enemy_detection_area_body_exited(body):
+	#檢查離開偵測區的敵人有沒有在 enemy_close 陣列中，如果有就移出
+	if enemy_close.has(body):
+		enemy_close.erase(body)
+"
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_t4d1l"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_3rlaw")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_my04w")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_hfp3l")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_tq1s3")
+}],
+"loop": true,
+"name": &"default",
+"speed": 10.0
+}]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_vi5iu"]
+radius = 11.4018
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_ln12e"]
+radius = 13.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_8p51r"]
+radius = 537.023
+
+[node name="Player" type="CharacterBody2D" groups=["Player"]]
+collision_layer = 2
+collision_mask = 2
+script = SubResource("GDScript_sm7py")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_t4d1l")
+frame_progress = 0.717783
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_vi5iu")
+
+[node name="HurtBox" parent="." instance=ExtResource("5_27j8u")]
+collision_layer = 2
+collision_mask = 2
+
+[node name="CollisionShape2D" parent="HurtBox" index="0"]
+shape = SubResource("CircleShape2D_ln12e")
+
+[node name="Attack" type="Node2D" parent="."]
+
+[node name="IceSpearTimer" type="Timer" parent="Attack"]
+unique_name_in_owner = true
+wait_time = 1.5
+
+[node name="AttackTimer" type="Timer" parent="Attack/IceSpearTimer"]
+unique_name_in_owner = true
+wait_time = 0.075
+
+[node name="EnemyDetectionArea" type="Area2D" parent="."]
+collision_layer = 4
+collision_mask = 4
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="EnemyDetectionArea"]
+shape = SubResource("CircleShape2D_8p51r")
+
+[connection signal="hurt" from="HurtBox" to="." method="_on_hurt_box_hurt"]
+[connection signal="timeout" from="Attack/IceSpearTimer" to="." method="_on_ice_spear_timer_timeout"]
+[connection signal="timeout" from="Attack/IceSpearTimer/AttackTimer" to="." method="_on_attack_timer_timeout"]
+[connection signal="body_entered" from="EnemyDetectionArea" to="." method="_on_enemy_detection_area_body_entered"]
+[connection signal="body_exited" from="EnemyDetectionArea" to="." method="_on_enemy_detection_area_body_exited"]
+
+[editable path="HurtBox"]

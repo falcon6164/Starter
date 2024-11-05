@@ -1,0 +1,22 @@
+[gd_scene load_steps=4 format=3 uid="uid://ctwvustkyxevi"]
+
+[ext_resource type="PackedScene" uid="uid://k1qin40j3bay" path="res://Scripts/Utility/enemy_spawner.tscn" id="1_6h6p1"]
+[ext_resource type="PackedScene" uid="uid://bq5q7c0uwv4mf" path="res://Scripts/NPCs/Player.tscn" id="1_07igc"]
+[ext_resource type="Texture2D" uid="uid://csxnk2dx5h7cx" path="res://Sprites/Gass tile.jpg" id="3_7c31c"]
+
+[node name="Node2D" type="Node2D"]
+
+[node name="EnemySpawner" parent="." instance=ExtResource("1_6h6p1")]
+position = Vector2(0, -1)
+
+[node name="Player" parent="." instance=ExtResource("1_07igc")]
+z_index = 99
+position = Vector2(1, -1)
+
+[node name="BackgroundTile" type="Sprite2D" parent="."]
+z_index = -1
+texture_filter = 2
+texture_repeat = 2
+texture = ExtResource("3_7c31c")
+region_enabled = true
+region_rect = Rect2(0, 0, 4000, 4000)

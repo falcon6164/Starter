@@ -1,0 +1,72 @@
+[gd_scene load_steps=12 format=3 uid="uid://c7cpbodfshy7m"]
+
+[ext_resource type="Script" path="res://Scripts/NPCs/Enemy.gd" id="1_gmm5o"]
+[ext_resource type="Texture2D" uid="uid://finju0yxfhb3" path="res://Sprites/Frog/frog-jump.png" id="2_dgn18"]
+[ext_resource type="PackedScene" uid="uid://bkdp6gkp2thxc" path="res://Scripts/Utility/HurtBox.tscn" id="3_24q3n"]
+[ext_resource type="PackedScene" uid="uid://dryh70omh4854" path="res://Scripts/Utility/HitBox.tscn" id="4_5s2nt"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2f8nd"]
+atlas = ExtResource("2_dgn18")
+region = Rect2(0, 0, 35, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_mwgsw"]
+atlas = ExtResource("2_dgn18")
+region = Rect2(35, 0, 35, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_cs3pp"]
+atlas = ExtResource("2_dgn18")
+region = Rect2(70, 0, 35, 32)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_58xjs"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2f8nd")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_mwgsw")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_cs3pp")
+}],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_hbs1f"]
+radius = 9.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_axi1m"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_wdnxo"]
+radius = 11.0454
+
+[node name="Enemy" type="CharacterBody2D"]
+collision_layer = 5
+collision_mask = 5
+script = ExtResource("1_gmm5o")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_58xjs")
+frame_progress = 0.290182
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_hbs1f")
+
+[node name="HurtBox" parent="." instance=ExtResource("3_24q3n")]
+collision_mask = 4
+
+[node name="CollisionShape2D" parent="HurtBox" index="0"]
+shape = SubResource("CircleShape2D_axi1m")
+
+[node name="HitBox" parent="HurtBox" instance=ExtResource("4_5s2nt")]
+collision_layer = 2
+
+[node name="CollisionShape2D" parent="HurtBox/HitBox" index="0"]
+shape = SubResource("CircleShape2D_wdnxo")
+
+[connection signal="hurt" from="HurtBox" to="." method="_on_hurt_box_hurt"]
+
+[editable path="HurtBox"]
+[editable path="HurtBox/HitBox"]
